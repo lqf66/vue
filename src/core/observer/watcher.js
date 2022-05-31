@@ -25,26 +25,27 @@ let uid = 0
  * This is used for both the $watch() api and directives.
  */
 export default class Watcher {
-  vm: Component;
-  expression: string;
-  cb: Function;
-  id: number;
-  deep: boolean;
-  user: boolean;
-  lazy: boolean;
-  sync: boolean;
-  dirty: boolean;
-  active: boolean;
-  deps: Array<Dep>;
-  newDeps: Array<Dep>;
-  depIds: SimpleSet;
-  newDepIds: SimpleSet;
-  before: ?Function;
-  getter: Function;
-  value: any;
+  vm: Component
+  expression: string
+  cb: Function
+  id: number
+  deep: boolean
+  user: boolean
+  lazy: boolean
+  sync: boolean
+  dirty: boolean
+  active: boolean
+  deps: Array<Dep>
+  newDeps: Array<Dep>
+  depIds: SimpleSet
+  newDepIds: SimpleSet
+  before: ?Function
+  getter: Function
+  value: any
 
-  constructor (
+  constructor(
     vm: Component,
+    /// 传入的可能是 updateComponent 或 定义的数据名称
     expOrFn: string | Function,
     cb: Function,
     options?: ?Object,
@@ -54,6 +55,7 @@ export default class Watcher {
     if (isRenderWatcher) {
       vm._watcher = this
     }
+    /// 添加到全局
     vm._watchers.push(this)
     // options
     if (options) {
@@ -68,6 +70,7 @@ export default class Watcher {
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
+    /// 懒加载
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -78,6 +81,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
+      /// getter 直接是 updateComponent
       this.getter = expOrFn
     } else {
       this.getter = parsePath(expOrFn)
@@ -91,19 +95,23 @@ export default class Watcher {
         )
       }
     }
+    /// 如果 computed 初始化不执行
     this.value = this.lazy
       ? undefined
+      /// 正常会执行一次
       : this.get()
   }
 
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
-  get () {
+  get() {
+    /// 需要依赖收集
     pushTarget(this)
     let value
     const vm = this.vm
     try {
+      /// 执行 getter
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -115,9 +123,11 @@ export default class Watcher {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
+        /// 如果设置了 deep 属性
         traverse(value)
       }
       popTarget()
+      /// 如果有被删除的依赖，走这里更新
       this.cleanupDeps()
     }
     return value
@@ -126,12 +136,15 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
-  addDep (dep: Dep) {
+  addDep(dep: Dep) {
     const id = dep.id
+    /// 避免重复存储
     if (!this.newDepIds.has(id)) {
+      /// 存入 id 和 dep
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
+        /// 反向存储到 dep 的 subs 中
         dep.addSub(this)
       }
     }
@@ -140,14 +153,16 @@ export default class Watcher {
   /**
    * Clean up for dependency collection.
    */
-  cleanupDeps () {
+  cleanupDeps() {
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
+      /// 更新依赖
       if (!this.newDepIds.has(dep.id)) {
         dep.removeSub(this)
       }
     }
+    /// 重新赋值
     let tmp = this.depIds
     this.depIds = this.newDepIds
     this.newDepIds = tmp
@@ -162,13 +177,16 @@ export default class Watcher {
    * Subscriber interface.
    * Will be called when a dependency changes.
    */
-  update () {
+  update() {
     /* istanbul ignore else */
     if (this.lazy) {
+      /// computed
       this.dirty = true
     } else if (this.sync) {
+      /// sync 参数
       this.run()
     } else {
+      /// 正常开启异步更新队列
       queueWatcher(this)
     }
   }
@@ -177,8 +195,9 @@ export default class Watcher {
    * Scheduler job interface.
    * Will be called by the scheduler.
    */
-  run () {
+  run() {
     if (this.active) {
+      /// 执行 get
       const value = this.get()
       if (
         value !== this.value ||
@@ -188,6 +207,7 @@ export default class Watcher {
         isObject(value) ||
         this.deep
       ) {
+        // TODO
         // set new value
         const oldValue = this.value
         this.value = value
@@ -205,7 +225,8 @@ export default class Watcher {
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
    */
-  evaluate () {
+  evaluate() {
+    /// computed 更新的时候执行
     this.value = this.get()
     this.dirty = false
   }
@@ -213,7 +234,8 @@ export default class Watcher {
   /**
    * Depend on all deps collected by this watcher.
    */
-  depend () {
+  depend() {
+    /// 所有 dep 互关
     let i = this.deps.length
     while (i--) {
       this.deps[i].depend()
@@ -223,7 +245,8 @@ export default class Watcher {
   /**
    * Remove self from all dependencies' subscriber list.
    */
-  teardown () {
+  /// 卸载啦
+  teardown() {
     if (this.active) {
       // remove self from vm's watcher list
       // this is a somewhat expensive operation so we skip it

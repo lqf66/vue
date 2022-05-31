@@ -10,10 +10,12 @@ import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
 const idToTemplate = cached(id => {
+  // 使用 querySelector 搜索元素节点
   const el = query(id)
   return el && el.innerHTML
 })
 
+// 扩展 mount（添加 render）
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,
@@ -29,13 +31,18 @@ Vue.prototype.$mount = function (
     return this
   }
 
+  // 获取配置
   const options = this.$options
   // resolve template/el and convert to render function
+
+  // 如果配置中没有 render 函数
   if (!options.render) {
+    // 取出配置中的 template
     let template = options.template
     if (template) {
       if (typeof template === 'string') {
         if (template.charAt(0) === '#') {
+          // 查找节点并获得元素内容
           template = idToTemplate(template)
           /* istanbul ignore if */
           if (process.env.NODE_ENV !== 'production' && !template) {
@@ -46,6 +53,7 @@ Vue.prototype.$mount = function (
           }
         }
       } else if (template.nodeType) {
+        // 如果 template 是一个节点
         template = template.innerHTML
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -54,6 +62,7 @@ Vue.prototype.$mount = function (
         return this
       }
     } else if (el) {
+      // 如果没有 template，取 el 节点的 html
       template = getOuterHTML(el)
     }
     if (template) {
@@ -62,6 +71,7 @@ Vue.prototype.$mount = function (
         mark('compile')
       }
 
+      // 通过 compileToFunctions 工厂函数获得 render
       const { render, staticRenderFns } = compileToFunctions(template, {
         outputSourceRange: process.env.NODE_ENV !== 'production',
         shouldDecodeNewlines,
@@ -69,6 +79,8 @@ Vue.prototype.$mount = function (
         delimiters: options.delimiters,
         comments: options.comments
       }, this)
+
+      // 把 render 扩展到配置项中
       options.render = render
       options.staticRenderFns = staticRenderFns
 
@@ -79,6 +91,8 @@ Vue.prototype.$mount = function (
       }
     }
   }
+
+  // 执行原函数内容
   return mount.call(this, el, hydrating)
 }
 
@@ -96,6 +110,7 @@ function getOuterHTML (el: Element): string {
   }
 }
 
+// template => render
 Vue.compile = compileToFunctions
 
 export default Vue

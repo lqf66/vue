@@ -4,6 +4,7 @@ import type Watcher from './watcher'
 import { remove } from '../util/index'
 import config from '../config'
 
+/// 每个 dep 都有其 id
 let uid = 0
 
 /**
@@ -11,36 +12,41 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
-  static target: ?Watcher;
-  id: number;
-  subs: Array<Watcher>;
+  static target: ?Watcher
+  id: number
+  subs: Array<Watcher>
 
-  constructor () {
+  constructor() {
     this.id = uid++
+    /// 存放 watcher
     this.subs = []
   }
 
-  addSub (sub: Watcher) {
+  /// 推入 watcher
+  addSub(sub: Watcher) {
     this.subs.push(sub)
   }
 
-  removeSub (sub: Watcher) {
+  /// 删除 watcher
+  removeSub(sub: Watcher) {
     remove(this.subs, sub)
   }
 
-  depend () {
+  /// 调用 watcher 的 addDep 方法
+  depend() {
     if (Dep.target) {
       Dep.target.addDep(this)
     }
   }
 
-  notify () {
+  notify() {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
     if (process.env.NODE_ENV !== 'production' && !config.async) {
       // subs aren't sorted in scheduler if not running async
       // we need to sort them now to make sure they fire in correct
       // order
+      /// 排个序
       subs.sort((a, b) => a.id - b.id)
     }
     for (let i = 0, l = subs.length; i < l; i++) {
@@ -55,12 +61,13 @@ export default class Dep {
 Dep.target = null
 const targetStack = []
 
-export function pushTarget (target: ?Watcher) {
+export function pushTarget(target: ?Watcher) {
   targetStack.push(target)
   Dep.target = target
 }
 
-export function popTarget () {
+export function popTarget() {
   targetStack.pop()
+  /// 可能会有栈结构
   Dep.target = targetStack[targetStack.length - 1]
 }

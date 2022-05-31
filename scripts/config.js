@@ -120,9 +120,13 @@ const builds = {
     banner
   },
   // Runtime+compiler development build (Browser)
+  // npm run dev 走这里
   'web-full-dev': {
+    // 入口是 web/entry-runtime-with-compiler.js
     entry: resolve('web/entry-runtime-with-compiler.js'),
+    // 出口
     dest: resolve('dist/vue.js'),
+    // 使用 umd
     format: 'umd',
     env: 'development',
     alias: { he: './entity-decoder' },
