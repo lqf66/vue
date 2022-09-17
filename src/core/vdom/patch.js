@@ -143,7 +143,7 @@ export function createPatchFunction(backend) {
     }
 
     vnode.isRootInsert = !nested // for transition enter check
-    /// TODO 创建组件
+    /// 组件的创建
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -220,6 +220,7 @@ export function createPatchFunction(backend) {
     let i = vnode.data
     if (isDef(i)) {
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+      /// 会执行组件的 init 钩子，创建一个 Child 并且挂载它
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */)
       }

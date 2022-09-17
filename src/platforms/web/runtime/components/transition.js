@@ -31,7 +31,7 @@ export const transitionProps = {
 
 // in case the child is also an abstract component, e.g. <keep-alive>
 // we want to recursively retrieve the real component to be rendered
-function getRealChild (vnode: ?VNode): ?VNode {
+function getRealChild(vnode: ?VNode): ?VNode {
   const compOptions: ?VNodeComponentOptions = vnode && vnode.componentOptions
   if (compOptions && compOptions.Ctor.options.abstract) {
     return getRealChild(getFirstComponentChild(compOptions.children))
@@ -40,7 +40,7 @@ function getRealChild (vnode: ?VNode): ?VNode {
   }
 }
 
-export function extractTransitionData (comp: Component): Object {
+export function extractTransitionData(comp: Component): Object {
   const data = {}
   const options: ComponentOptions = comp.$options
   // props
@@ -56,7 +56,7 @@ export function extractTransitionData (comp: Component): Object {
   return data
 }
 
-function placeholder (h: Function, rawChild: VNode): ?VNode {
+function placeholder(h: Function, rawChild: VNode): ?VNode {
   if (/\d-keep-alive$/.test(rawChild.tag)) {
     return h('keep-alive', {
       props: rawChild.componentOptions.propsData
@@ -64,7 +64,7 @@ function placeholder (h: Function, rawChild: VNode): ?VNode {
   }
 }
 
-function hasParentTransition (vnode: VNode): ?boolean {
+function hasParentTransition(vnode: VNode): ?boolean {
   while ((vnode = vnode.parent)) {
     if (vnode.data.transition) {
       return true
@@ -72,7 +72,7 @@ function hasParentTransition (vnode: VNode): ?boolean {
   }
 }
 
-function isSameChild (child: VNode, oldChild: VNode): boolean {
+function isSameChild(child: VNode, oldChild: VNode): boolean {
   return oldChild.key === child.key && oldChild.tag === child.tag
 }
 
@@ -85,7 +85,7 @@ export default {
   props: transitionProps,
   abstract: true,
 
-  render (h: Function) {
+  render(h: Function) {
     let children: any = this.$slots.default
     if (!children) {
       return
@@ -107,6 +107,7 @@ export default {
       )
     }
 
+    /// mode 只支持 in-out out-in
     const mode: string = this.mode
 
     // warn invalid mode

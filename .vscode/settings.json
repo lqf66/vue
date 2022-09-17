@@ -1,0 +1,11 @@
+{
+  "errorLens.enabledDiagnosticLevels": [
+    "info"
+  ],
+  "errorLens.excludeBySource": [ // 忽略错误提示
+    "cSpell",
+    "Grammarly",
+    "eslint",
+    "strat",
+  ],
+}

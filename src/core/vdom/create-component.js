@@ -34,7 +34,7 @@ import {
 
 // inline hooks to be invoked on component VNodes during patch
 const componentVNodeHooks = {
-  init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
+  init(vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
       !vnode.componentInstance._isDestroyed &&
@@ -44,15 +44,17 @@ const componentVNodeHooks = {
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      /// 创建一个 Child，其中会进行 initLifeCycle
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       )
+      /// 手动调用 $mount 方法
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
 
-  prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
+  prepatch(oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
     const options = vnode.componentOptions
     const child = vnode.componentInstance = oldVnode.componentInstance
     updateChildComponent(
@@ -64,7 +66,7 @@ const componentVNodeHooks = {
     )
   },
 
-  insert (vnode: MountedComponentVNode) {
+  insert(vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true
@@ -84,7 +86,7 @@ const componentVNodeHooks = {
     }
   },
 
-  destroy (vnode: MountedComponentVNode) {
+  destroy(vnode: MountedComponentVNode) {
     const { componentInstance } = vnode
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {
@@ -98,7 +100,7 @@ const componentVNodeHooks = {
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
-export function createComponent (
+export function createComponent(
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
   context: Component,
@@ -109,10 +111,12 @@ export function createComponent (
     return
   }
 
+  /// 这是 Vue
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
+    /// Vue.extend 创建该组件的构造函数
     Ctor = baseCtor.extend(Ctor)
   }
 
@@ -126,7 +130,9 @@ export function createComponent (
   }
 
   // async component
+  /// 异步组件逻辑
   let asyncFactory
+  /// Ctor 是一个函数，没有 cid
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor)
@@ -152,6 +158,7 @@ export function createComponent (
 
   // transform component v-model data into props & events
   if (isDef(data.model)) {
+    /// 如果传入了 model，需要特殊处理
     transformModel(Ctor.options, data)
   }
 
@@ -159,12 +166,14 @@ export function createComponent (
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
+  /// 函数式组件
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
   // extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
+  /// 转换 on 和 nativeOn 的关系，以便后续进行区分
   const listeners = data.on
   // replace with listeners with .native modifier
   // so it gets processed during parent component patch.
@@ -183,6 +192,7 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  /// 初始化组件钩子
   installComponentHooks(data)
 
   // return a placeholder vnode
@@ -205,7 +215,7 @@ export function createComponent (
   return vnode
 }
 
-export function createComponentInstanceForVnode (
+export function createComponentInstanceForVnode(
   // we know it's MountedComponentVNode but flow doesn't
   vnode: any,
   // activeInstance in lifecycle state
@@ -222,10 +232,12 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  /// 主要是做了调用 Ctor 的工作
   return new vnode.componentOptions.Ctor(options)
 }
 
-function installComponentHooks (data: VNodeData) {
+/// 把组件的钩子方法挂载到组件的 data 方法上
+function installComponentHooks(data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
     const key = hooksToMerge[i]
@@ -237,7 +249,7 @@ function installComponentHooks (data: VNodeData) {
   }
 }
 
-function mergeHook (f1: any, f2: any): Function {
+function mergeHook(f1: any, f2: any): Function {
   const merged = (a, b) => {
     // flow complains about extra args which is why we use any
     f1(a, b)
@@ -249,10 +261,10 @@ function mergeHook (f1: any, f2: any): Function {
 
 // transform component v-model info (value and callback) into
 // prop and event handler respectively.
-function transformModel (options, data: any) {
+function transformModel(options, data: any) {
   const prop = (options.model && options.model.prop) || 'value'
   const event = (options.model && options.model.event) || 'input'
-  ;(data.attrs || (data.attrs = {}))[prop] = data.model.value
+    ; (data.attrs || (data.attrs = {}))[prop] = data.model.value // data.attrs.value = 'xxx' '
   const on = data.on || (data.on = {})
   const existing = on[event]
   const callback = data.model.callback
